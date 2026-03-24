@@ -2,11 +2,11 @@ import { ipcMain, shell, WebFrameMain } from 'electron'
 import log from 'electron-log'
 import { ALLOWED_EXTERNAL_HOSTS, APP_BASE_URL } from '../shared/constants'
 import { ok, err } from '../shared/errors'
-import type { RecordingState } from '../shared/types'
+import type { InvokeChannel, IpcInvokeChannels } from '../shared/ipc-channels'
 import * as authManager from './auth-manager'
 import * as apiClient from './api-client'
 
-// --- Secure Handler Wrapper ---
+// --- Secure Handler Wrapper (typed) ---
 
 function isValidSender(frame: WebFrameMain | null): boolean {
   if (!frame) return false
@@ -14,16 +14,19 @@ function isValidSender(frame: WebFrameMain | null): boolean {
   return url.startsWith('file://') || url.startsWith('http://localhost')
 }
 
-function secureHandle(
-  channel: string,
-  handler: (event: Electron.IpcMainInvokeEvent, ...args: unknown[]) => unknown
+function secureHandle<C extends InvokeChannel>(
+  channel: C,
+  handler: (
+    event: Electron.IpcMainInvokeEvent,
+    ...args: IpcInvokeChannels[C]['args']
+  ) => IpcInvokeChannels[C]['return'] | Promise<IpcInvokeChannels[C]['return']>
 ): void {
   ipcMain.handle(channel, (event, ...args) => {
     if (!isValidSender(event.senderFrame)) {
       log.warn(`Blocked IPC call on ${channel} from ${event.senderFrame?.url}`)
       throw new Error(`Unauthorized IPC call on ${channel}`)
     }
-    return handler(event, ...args)
+    return handler(event, ...(args as IpcInvokeChannels[C]['args']))
   })
 }
 
@@ -36,7 +39,7 @@ export function registerIpcHandlers(): void {
       const token = authManager.getToken()
       return ok(token)
     } catch {
-      return err({ code: 'OPERATION_FAILED' as const, message: 'Failed to read token' })
+      return err({ code: 'OPERATION_FAILED', message: 'Failed to read token' })
     }
   })
 
@@ -44,10 +47,12 @@ export function registerIpcHandlers(): void {
     authManager.signOut()
   })
 
-  secureHandle('auth:open-login', () => {
+  secureHandle('auth:open-login', async () => {
     const state = authManager.generateState()
     const loginUrl = `${APP_BASE_URL}/login?from=desktop&state=${state}`
-    shell.openExternal(loginUrl)
+    await shell.openExternal(loginUrl).catch((e) => {
+      log.error('Failed to open browser for login:', e)
+    })
   })
 
   // Recording (placeholder — implemented in Phase 2)
@@ -67,8 +72,8 @@ export function registerIpcHandlers(): void {
     log.info('recording:cancel — not implemented yet')
   })
 
-  secureHandle('recording:get-state', (): RecordingState => {
-    return { status: 'idle' }
+  secureHandle('recording:get-state', () => {
+    return { status: 'idle' as const }
   })
 
   secureHandle('recording:get-steps', () => {
@@ -76,15 +81,14 @@ export function registerIpcHandlers(): void {
   })
 
   // Guide upload (placeholder — full implementation in Phase 3)
-  secureHandle('guide:upload-all', async (_event, ...args: unknown[]) => {
+  secureHandle('guide:upload-all', async (_event, params) => {
     try {
-      const params = args[0] as Parameters<typeof apiClient.uploadGuide>[0]
       const steps = [] as Parameters<typeof apiClient.uploadGuide>[1] // TODO: get from step store
       const result = await apiClient.uploadGuide(params, steps)
       return ok(result)
     } catch (error) {
       return err({
-        code: 'OPERATION_FAILED' as const,
+        code: 'OPERATION_FAILED',
         message: error instanceof Error ? error.message : 'Upload failed'
       })
     }
@@ -97,25 +101,26 @@ export function registerIpcHandlers(): void {
       return ok(usage)
     } catch (error) {
       if (error instanceof Error && error.name === 'AuthError') {
-        return err({ code: 'AUTH_EXPIRED' as const, message: error.message })
+        return err({ code: 'AUTH_EXPIRED', message: error.message })
       }
       return err({
-        code: 'OPERATION_FAILED' as const,
+        code: 'OPERATION_FAILED',
         message: error instanceof Error ? error.message : 'Failed to fetch usage'
       })
     }
   })
 
   // Utility
-  secureHandle('app:open-external', (_event, ...args: unknown[]) => {
-    const url = args[0] as string
+  secureHandle('app:open-external', (_event, url) => {
     try {
       const parsed = new URL(url)
       if (parsed.protocol !== 'https:' || !ALLOWED_EXTERNAL_HOSTS.includes(parsed.hostname)) {
         log.warn(`Blocked shell.openExternal for: ${url}`)
         return
       }
-      shell.openExternal(url)
+      shell.openExternal(url).catch((e) => {
+        log.error('Failed to open external URL:', e)
+      })
     } catch {
       log.warn(`Invalid URL for shell.openExternal: ${url}`)
     }

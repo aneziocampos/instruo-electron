@@ -27,7 +27,7 @@ export interface IpcInvokeChannels {
 // --- Event channels (main sends, renderer listens) ---
 
 export interface IpcEventChannels {
-  'auth:token-received': { args: [token: string] }
+  'auth:authenticated': { args: [] }
   'recording:status-changed': { args: [state: RecordingState] }
   'upload:progress': { args: [uploaded: number, total: number] }
   'upload:error': { args: [error: AppError] }

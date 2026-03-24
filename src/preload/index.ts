@@ -27,10 +27,10 @@ const api = {
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke('app:open-external', url),
 
   // --- Events (main → renderer subscriptions) ---
-  onTokenReceived: (callback: (token: string) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, token: string): void => callback(token)
-    ipcRenderer.on('auth:token-received', handler)
-    return () => ipcRenderer.removeListener('auth:token-received', handler)
+  onAuthenticated: (callback: () => void): (() => void) => {
+    const handler = (): void => callback()
+    ipcRenderer.on('auth:authenticated', handler)
+    return () => ipcRenderer.removeListener('auth:authenticated', handler)
   },
 
   onRecordingStatusChanged: (callback: (state: RecordingState) => void): (() => void) => {

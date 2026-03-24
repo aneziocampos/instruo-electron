@@ -24,7 +24,7 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
   const template = translations[currentLocale][key] ?? translations.en[key] ?? key
   if (!params) return template
   return Object.entries(params).reduce(
-    (result, [k, v]) => result.replace(`{${k}}`, String(v)),
+    (result, [k, v]) => result.replaceAll(`{${k}}`, String(v)),
     template
   )
 }

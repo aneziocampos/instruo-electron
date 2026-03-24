@@ -1,33 +1,47 @@
 import { useState, useEffect } from 'react'
 import { t } from '../i18n'
 import type { UsageResponse } from '../../../shared/types'
-import { HOTKEY } from '../../../shared/constants'
 
 interface Props {
   onStartRecording: () => void
   onSignOut: () => void
 }
 
-export function IdlePage({ onStartRecording, onSignOut }: Props): JSX.Element {
+export function IdlePage({ onStartRecording, onSignOut }: Props) {
   const [usage, setUsage] = useState<UsageResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    window.electronAPI.fetchUsage().then((result) => {
-      if (result.ok) {
-        setUsage(result.value)
-      }
-      setLoading(false)
-    })
-  }, [])
+    window.electronAPI
+      .fetchUsage()
+      .then((result) => {
+        if (result.ok) {
+          setUsage(result.value)
+        } else if (result.error.code === 'AUTH_EXPIRED') {
+          onSignOut()
+          return
+        } else {
+          setError(result.error.message)
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        setError(t('error.network'))
+        setLoading(false)
+      })
+  }, [onSignOut])
 
-  const handleSignOut = async (): Promise<void> => {
+  const handleSignOut = async () => {
     await window.electronAPI.signOut()
     onSignOut()
   }
 
   const isAtLimit =
     usage?.plan.guideLimit != null && usage.plan.guidesUsed >= usage.plan.guideLimit
+
+  const hotkeyDisplay =
+    navigator.platform.includes('Mac') ? 'Cmd+Shift+R' : 'Ctrl+Shift+R'
 
   return (
     <div className="flex flex-col min-h-screen px-6 py-6">
@@ -45,6 +59,7 @@ export function IdlePage({ onStartRecording, onSignOut }: Props): JSX.Element {
             </>
           )}
           {loading && <div className="h-8 w-32 bg-ink-soft rounded animate-pulse" />}
+          {error && <p className="text-danger text-xs">{error}</p>}
         </div>
         <button
           onClick={handleSignOut}
@@ -65,7 +80,7 @@ export function IdlePage({ onStartRecording, onSignOut }: Props): JSX.Element {
         </button>
         <p className="text-text-tertiary text-xs mt-3">
           <kbd className="bg-ink-soft px-1.5 py-0.5 rounded text-text-secondary font-mono text-[10px]">
-            {HOTKEY.replace('CommandOrControl', 'Ctrl')}
+            {hotkeyDisplay}
           </kbd>
         </p>
 
@@ -73,7 +88,9 @@ export function IdlePage({ onStartRecording, onSignOut }: Props): JSX.Element {
           <div className="mt-4 text-center">
             <p className="text-danger text-sm">{t('error.planLimit')}</p>
             <button
-              onClick={() => window.electronAPI.openExternal('https://app.instruo.ai/settings/billing')}
+              onClick={() =>
+                window.electronAPI.openExternal('https://app.instruo.ai/settings/billing')
+              }
               className="text-accent text-sm mt-1 hover:underline"
             >
               {t('error.upgrade')}

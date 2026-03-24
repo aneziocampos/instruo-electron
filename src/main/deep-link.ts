@@ -53,15 +53,11 @@ async function exchangeCodeForToken(code: string): Promise<void> {
     const { getMainWindow } = await import('./index')
     const mainWindow = getMainWindow()
     if (mainWindow) {
-      mainWindow.webContents.send('auth:token-received', token)
+      mainWindow.webContents.send('auth:authenticated')
     }
 
     log.info('Auth code exchanged successfully')
   } catch (error) {
     log.error('Failed to exchange auth code:', error)
   }
-}
-
-export function getDeepLinkUrl(args: string[]): string | undefined {
-  return args.find((arg) => arg.startsWith('instruo://'))
 }

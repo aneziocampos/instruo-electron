@@ -4,18 +4,18 @@ import { IdlePage } from './pages/IdlePage'
 
 type AppView = 'loading' | 'auth' | 'idle'
 
-export function App(): JSX.Element {
+export function App() {
   const [view, setView] = useState<AppView>('loading')
 
   useEffect(() => {
-    // Check for existing token on mount
-    window.electronAPI.getToken().then((result) => {
-      if (result.ok && result.value) {
-        setView('idle')
-      } else {
+    window.electronAPI
+      .getToken()
+      .then((result) => {
+        setView(result.ok && result.value ? 'idle' : 'auth')
+      })
+      .catch(() => {
         setView('auth')
-      }
-    })
+      })
   }, [])
 
   if (view === 'loading') {

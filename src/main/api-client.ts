@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises'
 import log from 'electron-log'
-import { API_BASE_URL } from '../shared/constants'
+import { API_BASE_URL, APP_BASE_URL } from '../shared/constants'
 import { AuthError } from '../shared/errors'
 import type { CapturedStep, GuideUploadParams, GuideResponse, UsageResponse } from '../shared/types'
 import * as authManager from './auth-manager'
@@ -46,7 +46,10 @@ export async function exchangeAuthCode(code: string): Promise<string> {
     throw new Error(`Auth code exchange failed: ${response.status}`)
   }
 
-  const data = (await response.json()) as { token: string }
+  const data = (await response.json()) as { token?: string }
+  if (!data.token || typeof data.token !== 'string') {
+    throw new Error('Invalid auth response: missing token')
+  }
   return data.token
 }
 
@@ -59,16 +62,19 @@ interface UsageApiResponse {
 
 export async function fetchUsage(): Promise<UsageResponse> {
   const response = await apiFetch('/usage')
-  const data = (await response.json()) as UsageApiResponse
+  const data = (await response.json()) as Partial<UsageApiResponse>
+  if (!data.user?.email || !data.plan?.name) {
+    throw new Error('Invalid usage response: missing required fields')
+  }
 
   return {
-    user: { name: data.user.name, email: data.user.email },
+    user: { name: data.user.name ?? '', email: data.user.email },
     plan: {
-      name: data.plan.name,
-      guideLimit: data.plan.guide_limit ?? null,
-      guidesUsed: data.plan.guides_used
+      name: data.plan!.name,
+      guideLimit: data.plan!.guide_limit ?? null,
+      guidesUsed: data.plan!.guides_used ?? 0
     },
-    aiWriters: (data.ai_writers || []).map((w) => ({
+    aiWriters: (data.ai_writers ?? []).map((w) => ({
       id: String(w.id),
       name: w.name,
       isCustom: w.is_custom
@@ -103,7 +109,10 @@ async function createGuide(
     body: JSON.stringify(body)
   })
 
-  const data = (await response.json()) as { guide: { public_slug: string } }
+  const data = (await response.json()) as { guide?: { public_slug?: string } }
+  if (!data.guide?.public_slug) {
+    throw new Error('Invalid guide response: missing public_slug')
+  }
   return data.guide.public_slug
 }
 
@@ -180,6 +189,6 @@ export async function uploadGuide(
 
   return {
     slug: guideSlug,
-    url: `https://app.instruo.ai/guides/${guideSlug}`
+    url: `${APP_BASE_URL}/guides/${guideSlug}`
   }
 }

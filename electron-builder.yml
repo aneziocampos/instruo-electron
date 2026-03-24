@@ -1,0 +1,44 @@
+appId: ai.instruo.desktop
+productName: Instruo
+copyright: Copyright 2026 Instruo
+
+asar: true
+asarUnpack:
+  - "node_modules/uiohook-napi/**"
+  - "node_modules/node-winautomation/**"
+  - "**/*.node"
+
+npmRebuild: true
+nativeRebuilder: sequential
+
+directories:
+  buildResources: build
+  output: dist
+
+protocols:
+  - name: instruo-protocol
+    schemes:
+      - instruo
+
+files:
+  - "out/**/*"
+  - "!**/*.ts"
+  - "!**/*.map"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.ico
+  signingHashAlgorithms:
+    - sha256
+
+nsis:
+  oneClick: true
+  perMachine: false
+  deleteAppDataOnUninstall: true
+
+publish:
+  provider: generic
+  url: https://releases.instruo.ai/desktop

@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ink text-text-primary font-body antialiased;
+    -webkit-app-region: no-drag;
+    user-select: none;
+  }
+
+  * {
+    @apply border-border;
+  }
+}

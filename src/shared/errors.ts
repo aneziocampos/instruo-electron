@@ -1,11 +1,7 @@
 export type AppError =
   | { code: 'AUTH_EXPIRED'; message: string }
-  | { code: 'AUTH_INVALID_STATE'; message: string }
-  | { code: 'PLAN_LIMIT_REACHED'; currentCount: number; maxCount: number }
-  | { code: 'UIA_TIMEOUT'; x: number; y: number }
-  | { code: 'SCREENSHOT_FAILED'; displayId: string; message: string }
-  | { code: 'UPLOAD_FAILED'; stepIndex: number; httpStatus: number; message: string }
-  | { code: 'NETWORK_ERROR'; message: string }
+  | { code: 'PLAN_LIMIT_REACHED'; message: string }
+  | { code: 'OPERATION_FAILED'; message: string }
 
 export type Result<T, E = AppError> =
   | { ok: true; value: T }

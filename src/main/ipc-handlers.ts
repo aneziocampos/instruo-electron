@@ -5,6 +5,9 @@ import { ok, err } from '../shared/errors'
 import type { InvokeChannel, IpcInvokeChannels } from '../shared/ipc-channels'
 import * as authManager from './auth-manager'
 import * as apiClient from './api-client'
+import * as recordingEngine from './recording-engine'
+import * as stepStore from './step-store'
+import { startRecording, stopRecording, pauseRecording, cancelRecording } from './hotkey-manager'
 
 // --- Secure Handler Wrapper (typed) ---
 
@@ -55,35 +58,35 @@ export function registerIpcHandlers(): void {
     })
   })
 
-  // Recording (placeholder — implemented in Phase 2)
+  // Recording
   secureHandle('recording:start', () => {
-    log.info('recording:start — not implemented yet')
+    startRecording()
   })
 
   secureHandle('recording:stop', () => {
-    log.info('recording:stop — not implemented yet')
+    stopRecording()
   })
 
   secureHandle('recording:pause', () => {
-    log.info('recording:pause — not implemented yet')
+    pauseRecording()
   })
 
   secureHandle('recording:cancel', () => {
-    log.info('recording:cancel — not implemented yet')
+    cancelRecording()
   })
 
   secureHandle('recording:get-state', () => {
-    return { status: 'idle' as const }
+    return recordingEngine.getState()
   })
 
   secureHandle('recording:get-steps', () => {
-    return []
+    return recordingEngine.getStepThumbnails()
   })
 
-  // Guide upload (placeholder — full implementation in Phase 3)
+  // Guide upload
   secureHandle('guide:upload-all', async (_event, params) => {
     try {
-      const steps = [] as Parameters<typeof apiClient.uploadGuide>[1] // TODO: get from step store
+      const steps = stepStore.getSteps()
       const result = await apiClient.uploadGuide(params, steps)
       return ok(result)
     } catch (error) {

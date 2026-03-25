@@ -3,6 +3,15 @@ import { getMainWindow } from './index'
 
 let tray: Tray | null = null
 
+// Lazy references to hotkey-manager to avoid circular imports at module load
+let hotkeyManager: typeof import('./hotkey-manager') | null = null
+function getHotkeyManager(): typeof import('./hotkey-manager') {
+  if (!hotkeyManager) {
+    hotkeyManager = require('./hotkey-manager')
+  }
+  return hotkeyManager!
+}
+
 function showMainWindow(): void {
   const mainWindow = getMainWindow()
   if (!mainWindow) return
@@ -12,7 +21,6 @@ function showMainWindow(): void {
 }
 
 export function createTray(): void {
-  // Use a simple 16x16 placeholder icon — real icons will be designed later
   const icon = nativeImage.createEmpty()
   tray = new Tray(icon)
   tray.setToolTip('Instruo Desktop')
@@ -40,10 +48,19 @@ export function setRecordingMenu(stepCount: number): void {
   tray.setToolTip(`Recording — ${stepCount} steps`)
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: `Stop Recording (${stepCount} steps)`, click: () => { /* TODO: recording:stop */ } },
-      { label: 'Pause Recording', click: () => { /* TODO: recording:pause */ } },
+      {
+        label: `Stop Recording (${stepCount} steps)`,
+        click: () => getHotkeyManager().stopRecording()
+      },
+      {
+        label: 'Pause Recording',
+        click: () => getHotkeyManager().pauseRecording()
+      },
       { type: 'separator' },
-      { label: 'Cancel Recording', click: () => { /* TODO: recording:cancel */ } }
+      {
+        label: 'Cancel Recording',
+        click: () => getHotkeyManager().cancelRecording()
+      }
     ])
   )
 }
@@ -53,10 +70,23 @@ export function setPausedMenu(stepCount: number): void {
   tray.setToolTip(`Recording paused — ${stepCount} steps`)
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Resume Recording', click: () => { /* TODO: recording:resume */ } },
-      { label: `Stop Recording (${stepCount} steps)`, click: () => { /* TODO: recording:stop */ } },
+      {
+        label: 'Resume Recording',
+        click: () => {
+          require('./recording-engine').resume()
+          require('./global-hooks').startHooks()
+          setRecordingMenu(stepCount)
+        }
+      },
+      {
+        label: `Stop Recording (${stepCount} steps)`,
+        click: () => getHotkeyManager().stopRecording()
+      },
       { type: 'separator' },
-      { label: 'Cancel Recording', click: () => { /* TODO: recording:cancel */ } }
+      {
+        label: 'Cancel Recording',
+        click: () => getHotkeyManager().cancelRecording()
+      }
     ])
   )
 }

@@ -5,6 +5,7 @@ import { PROTOCOL, PROTOCOL_PREFIX, ALLOWED_EXTERNAL_HOSTS } from '../shared/con
 import { registerIpcHandlers } from './ipc-handlers'
 import { handleDeepLink } from './deep-link'
 import { createTray } from './tray-manager'
+import { registerHotkey } from './hotkey-manager'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -132,6 +133,7 @@ export function getMainWindow(): BrowserWindow | null {
 app.whenReady().then(() => {
   setupCSP()
   registerIpcHandlers()
+  registerHotkey()
   createTray()
   createWindow()
 

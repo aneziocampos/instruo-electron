@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
     build: {
       rollupOptions: {
-        external: ['uiohook-napi', 'node-winautomation']
+        external: ['uiohook-napi', 'node-winautomation', 'instruo-native']
       }
     }
   },

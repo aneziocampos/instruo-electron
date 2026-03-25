@@ -26,6 +26,20 @@ const api = {
   // --- Utility (invoke) ---
   openExternal: (url: string): Promise<void> => ipcRenderer.invoke('app:open-external', url),
 
+  // --- Permissions ---
+  checkAccessibilityPermission: (): Promise<boolean> =>
+    ipcRenderer.invoke('permission:check-accessibility'),
+  checkScreenPermission: (): Promise<boolean> =>
+    ipcRenderer.invoke('permission:check-screen'),
+  requestAccessibilityPermission: (): Promise<void> =>
+    ipcRenderer.invoke('permission:request-accessibility'),
+  requestScreenPermission: (): Promise<void> =>
+    ipcRenderer.invoke('permission:request-screen'),
+
+  // --- Generic invoke (for extensibility) ---
+  invoke: (channel: string, ...args: unknown[]): Promise<unknown> =>
+    ipcRenderer.invoke(channel, ...args),
+
   // --- Events (main → renderer subscriptions) ---
   onAuthenticated: (callback: () => void): (() => void) => {
     const handler = (): void => callback()

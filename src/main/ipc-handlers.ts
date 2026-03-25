@@ -128,4 +128,27 @@ export function registerIpcHandlers(): void {
       log.warn(`Invalid URL for shell.openExternal: ${url}`)
     }
   })
+
+  // Permissions (macOS)
+  secureHandle('permission:check-accessibility', () => {
+    const { systemPreferences } = require('electron')
+    return systemPreferences.isTrustedAccessibilityClient(false)
+  })
+
+  secureHandle('permission:check-screen', () => {
+    const { systemPreferences } = require('electron')
+    const status = systemPreferences.getMediaAccessStatus('screen')
+    return status === 'granted'
+  })
+
+  secureHandle('permission:request-accessibility', () => {
+    const { systemPreferences } = require('electron')
+    systemPreferences.isTrustedAccessibilityClient(true)
+  })
+
+  secureHandle('permission:request-screen', async () => {
+    // Trigger the screen recording permission prompt by requesting sources
+    const { desktopCapturer } = require('electron')
+    await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
+  })
 }

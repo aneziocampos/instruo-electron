@@ -22,6 +22,10 @@ export interface IpcInvokeChannels {
   'guide:upload-all': { args: [params: GuideUploadParams]; return: Result<GuideResponse> }
   'usage:fetch': { args: []; return: Result<UsageResponse> }
   'app:open-external': { args: [url: string]; return: void }
+  'permission:check-accessibility': { args: []; return: boolean }
+  'permission:check-screen': { args: []; return: boolean }
+  'permission:request-accessibility': { args: []; return: void }
+  'permission:request-screen': { args: []; return: void }
 }
 
 // --- Event channels (main sends, renderer listens) ---

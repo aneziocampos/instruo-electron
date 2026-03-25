@@ -144,6 +144,19 @@ app.whenReady().then(() => {
   }
 })
 
+// macOS: deep links arrive via open-url event (not second-instance)
+app.on('open-url', (_event, url) => {
+  if (url.startsWith(PROTOCOL_PREFIX)) {
+    handleDeepLink(url)
+  }
+  // Focus the window when a deep link arrives
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+  }
+})
+
 app.on('window-all-closed', () => {
   app.quit()
 })

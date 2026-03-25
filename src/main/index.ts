@@ -157,6 +157,15 @@ app.on('open-url', (_event, url) => {
   }
 })
 
+// Flush step store on quit to prevent data loss from debounce gap
+app.on('will-quit', (event) => {
+  const stepStore = require('./step-store')
+  if (stepStore.getStepCount() > 0) {
+    event.preventDefault()
+    stepStore.flush().finally(() => app.exit(0))
+  }
+})
+
 app.on('window-all-closed', () => {
   app.quit()
 })

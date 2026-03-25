@@ -1,5 +1,4 @@
-import { writeFile, readFile, unlink, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
+import { writeFile, unlink, mkdir, access } from 'fs/promises'
 import { join } from 'path'
 import { app } from 'electron'
 import log from 'electron-log'
@@ -93,31 +92,9 @@ async function persistSession(): Promise<void> {
   await writeFile(SESSION_FILE, lines.join('\n') + '\n')
 }
 
-// --- Crash Recovery ---
-
-export async function hasRecoveryData(): Promise<boolean> {
-  return existsSync(SESSION_FILE)
-}
-
-export async function loadRecoveryData(): Promise<CapturedStep[]> {
-  try {
-    const content = await readFile(SESSION_FILE, 'utf-8')
-    const lines = content.trim().split('\n').filter(Boolean)
-    return lines.map((line) => JSON.parse(line) as CapturedStep)
-  } catch {
-    return []
-  }
-}
-
-export async function recoverSteps(recovered: CapturedStep[]): Promise<void> {
-  steps = recovered
-}
-
 async function cleanupSessionDir(): Promise<void> {
   try {
-    if (existsSync(SESSION_FILE)) {
-      await unlink(SESSION_FILE)
-    }
+    await access(SESSION_FILE).then(() => unlink(SESSION_FILE)).catch(() => {})
   } catch {
     // Ignore cleanup errors
   }

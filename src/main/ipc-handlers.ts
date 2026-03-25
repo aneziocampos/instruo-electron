@@ -14,7 +14,11 @@ import { startRecording, stopRecording, pauseRecording, cancelRecording } from '
 function isValidSender(frame: WebFrameMain | null): boolean {
   if (!frame) return false
   const url = frame.url
-  return url.startsWith('file://') || url.startsWith('http://localhost')
+  if (url.startsWith('file://')) return true
+  // Only allow localhost in dev mode (note: colon prevents localhost.evil.com match)
+  const { is } = require('@electron-toolkit/utils')
+  if (is.dev && url.startsWith('http://localhost:')) return true
+  return false
 }
 
 function secureHandle<C extends InvokeChannel>(
@@ -83,13 +87,33 @@ export function registerIpcHandlers(): void {
     return recordingEngine.getStepThumbnails()
   })
 
-  // Guide upload
+  // Guide upload — with progress events wired to renderer
   secureHandle('guide:upload-all', async (_event, params) => {
     try {
       const steps = stepStore.getSteps()
-      const result = await apiClient.uploadGuide(params, steps)
+      const { getMainWindow: getWin } = require('./index')
+      const mainWindow = getWin()
+
+      const result = await apiClient.uploadGuide(params, steps, (uploaded, total) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('upload:progress', uploaded, total)
+        }
+      })
+
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('upload:complete', result.url)
+      }
+
       return ok(result)
     } catch (error) {
+      const { getMainWindow: getWin } = require('./index')
+      const mainWindow = getWin()
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('upload:error', {
+          code: 'OPERATION_FAILED',
+          message: error instanceof Error ? error.message : 'Upload failed'
+        })
+      }
       return err({
         code: 'OPERATION_FAILED',
         message: error instanceof Error ? error.message : 'Upload failed'

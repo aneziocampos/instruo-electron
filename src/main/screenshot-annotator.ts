@@ -12,32 +12,40 @@ import {
 } from '../shared/constants'
 
 const SESSION_DIR = join(app.getPath('temp'), 'instruo-session')
+let sessionDirReady = false
+
+async function ensureSessionDir(): Promise<void> {
+  if (sessionDirReady) return
+  await mkdir(SESSION_DIR, { recursive: true })
+  sessionDirReady = true
+}
+
+export function resetSessionDir(): void {
+  sessionDirReady = false
+}
 
 /**
- * Annotate a screenshot buffer with a red click circle and save to temp file.
- * Uses SVG overlay composited onto the JPEG via sharp (if available)
- * or falls back to saving the raw JPEG without annotation.
+ * Annotate a screenshot with a red click circle and save to temp file.
+ * P2: Accepts width/height from caller — no double JPEG decode.
  */
 export async function annotateAndSave(
   buffer: Buffer,
   clickX: number,
   clickY: number,
-  stepId: string
+  stepId: string,
+  imgWidth: number,
+  imgHeight: number
 ): Promise<string> {
-  await mkdir(SESSION_DIR, { recursive: true })
+  await ensureSessionDir()
   const outputPath = join(SESSION_DIR, `${stepId}.jpg`)
 
   try {
-    // Try using sharp for annotation
+    // sharp is optional — graceful fallback below if not installed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const sharp = require('sharp')
 
     const radius = CLICK_CIRCLE_RADIUS
     const strokeWidth = HIGHLIGHT_LINE_WIDTH
-
-    // Create SVG circle overlay
-    const metadata = await sharp(buffer).metadata()
-    const imgWidth = metadata.width || 1920
-    const imgHeight = metadata.height || 1080
 
     const svg = `<svg width="${imgWidth}" height="${imgHeight}">
       <circle cx="${clickX}" cy="${clickY}" r="${radius + strokeWidth}"
@@ -53,7 +61,6 @@ export async function annotateAndSave(
 
     return outputPath
   } catch {
-    // Fallback: save raw JPEG without annotation (sharp not installed)
     log.warn('sharp not available, saving screenshot without annotation')
     await writeFile(outputPath, buffer)
     return outputPath

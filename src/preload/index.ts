@@ -36,10 +36,6 @@ const api = {
   requestScreenPermission: (): Promise<void> =>
     ipcRenderer.invoke('permission:request-screen'),
 
-  // --- Generic invoke (for extensibility) ---
-  invoke: (channel: string, ...args: unknown[]): Promise<unknown> =>
-    ipcRenderer.invoke(channel, ...args),
-
   // --- Events (main → renderer subscriptions) ---
   onAuthenticated: (callback: () => void): (() => void) => {
     const handler = (): void => callback()

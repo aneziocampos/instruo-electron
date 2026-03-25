@@ -34,8 +34,12 @@ export function setToken(token: string): void {
     const encrypted = safeStorage.encryptString(token)
     store.set('encryptedToken', encrypted.toString('base64'))
   } else {
-    // Fallback: store as-is (less secure, but functional for dev)
-    store.set('encryptedToken', Buffer.from(token).toString('base64'))
+    // In dev, allow unencrypted fallback. In production, refuse to persist.
+    const { is } = require('@electron-toolkit/utils')
+    if (is.dev) {
+      store.set('encryptedToken', Buffer.from(token).toString('base64'))
+    }
+    // Production without safeStorage: token stays in memory only (cachedToken)
   }
 }
 

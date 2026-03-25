@@ -27,16 +27,25 @@ export function start(): void {
   log.info('Recording started')
 }
 
-export function stop(): void {
+export async function stop(): Promise<void> {
   if (state.status !== 'recording' && state.status !== 'paused') {
     log.warn(`Cannot stop recording from state: ${state.status}`)
     return
   }
 
+  // P1-012: Transition to a non-recording state FIRST, then await queue
+  // This prevents in-flight captures from overwriting state back to 'recording'
+  state = { status: 'idle' } // Transitional — captures will see this and bail out
+
+  // Wait for any in-flight captures to finish
+  await captureQueue
+
+  // Flush to disk before showing review
+  await stepStore.flush().catch((e) => log.error('Failed to flush steps on stop:', e))
+
   state = { status: 'review', steps: stepStore.getStepThumbnails() }
-  stepStore.flush().catch((e) => log.error('Failed to flush steps on stop:', e))
   notifyRenderer()
-  log.info('Recording stopped')
+  log.info(`Recording stopped (${stepStore.getStepCount()} steps)`)
 }
 
 export function pause(): void {
@@ -62,7 +71,7 @@ export function resume(): void {
 }
 
 export function cancel(): void {
-  if (state.status !== 'recording' && state.status !== 'paused') {
+  if (state.status !== 'recording' && state.status !== 'paused' && state.status !== 'review') {
     log.warn(`Cannot cancel from state: ${state.status}`)
     return
   }
@@ -71,18 +80,6 @@ export function cancel(): void {
   state = { status: 'idle' }
   notifyRenderer()
   log.info('Recording cancelled')
-}
-
-export function discard(): void {
-  if (state.status !== 'review') {
-    log.warn(`Cannot discard from state: ${state.status}`)
-    return
-  }
-
-  stepStore.clearSteps()
-  state = { status: 'idle' }
-  notifyRenderer()
-  log.info('Recording discarded')
 }
 
 export function getStepThumbnails(): StepThumbnail[] {
@@ -95,20 +92,18 @@ export function isRecording(): boolean {
 
 // --- Capture Queue ---
 
-/**
- * Enqueue a click capture. Called from global-hooks.ts on mousedown.
- * The screenshotBuffer is captured EAGERLY before queuing.
- */
 export function enqueueClick(
   x: number,
   y: number,
   button: 'left' | 'right',
-  screenshotBuffer: Buffer | null,
   screenshotPath: string | null,
   screenInfo: { width: number; height: number; displayId: string }
 ): void {
-  // State guard — reject if not recording
+  // State guard
   if (state.status !== 'recording') return
+
+  // P2: Capture startedAt before entering async closure (avoids unsafe cast)
+  const startedAt = state.startedAt
 
   captureQueue = captureQueue
     .then(async () => {
@@ -117,28 +112,29 @@ export function enqueueClick(
 
       const result = await capturePipeline.processClick(
         { x, y, button, time: Date.now() },
-        screenshotBuffer,
         screenshotPath,
         screenInfo
       )
+
+      // P1-012: Re-check AFTER processClick too (stop() may have been called during)
+      if (state.status !== 'recording') return
 
       if (result.step) {
         state = {
           status: 'recording',
           stepCount: stepStore.getStepCount(),
-          startedAt: (state as { startedAt: number }).startedAt
+          startedAt
         }
         notifyRenderer()
       }
 
       if (result.shouldStop) {
         log.info('40-step limit reached, auto-stopping')
-        stop()
+        await stop()
       }
     })
     .catch((error) => {
       log.error('Capture queue error:', error)
-      // Queue continues — one failure must not kill subsequent captures
     })
 }
 

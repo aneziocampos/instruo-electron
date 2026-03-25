@@ -22,58 +22,57 @@ export function checkAccessibilityPermission(prompt: boolean): boolean {
   }
 }
 
-// --- Element Detection ---
+// --- Unified Element + App Info Query (single set of FFI calls) ---
 
-export function getElementAt(x: number, y: number): SharedElementInfo | null {
+export interface ClickContext {
+  element: SharedElementInfo | null
+  app: { name: string; windowTitle: string }
+}
+
+/**
+ * Query element info AND app context in a single call.
+ * Makes exactly 3 FFI calls: getElementAtPosition + getParentChain + getProcessName.
+ * Previously this was split across getElementAt + getAppInfo = 5 FFI calls.
+ */
+export function getClickContext(x: number, y: number): ClickContext {
   try {
     const el = getNative().getElementAtPosition(x, y)
-    if (!el) return null
+    if (!el) {
+      return { element: null, app: { name: '', windowTitle: '' } }
+    }
 
-    const parents = getNative().getParentChain(x, y, 5)
+    // Single parent chain query (max depth covers both element context and window title)
+    const parents = getNative().getParentChain(x, y, 10)
     const parentNames = parents
       .map((p) => p.title || p.role || '')
       .filter(Boolean)
 
+    const processName = el.pid ? (getNative().getProcessName(el.pid) ?? '') : ''
+    const windowParent = parents.find((p) => p.role === 'AXWindow')
+
     return {
-      controlType: roleToControlType(el.role),
-      name: el.title || el.description || '',
-      automationId: '',
-      className: el.role || '',
-      isPassword: el.subrole === 'AXSecureTextField',
-      parentNames
+      element: {
+        controlType: roleToControlType(el.role),
+        name: el.title || el.description || '',
+        automationId: '',
+        className: el.role || '',
+        isPassword: el.subrole === 'AXSecureTextField',
+        parentNames
+      },
+      app: {
+        name: processName,
+        windowTitle: windowParent?.title || ''
+      }
     }
   } catch (error) {
-    log.error('AX element query failed:', error)
-    return null
-  }
-}
-
-export function getAppInfo(
-  x: number,
-  y: number
-): { name: string; windowTitle: string } {
-  try {
-    const el = getNative().getElementAtPosition(x, y)
-    if (!el) return { name: '', windowTitle: '' }
-
-    const processName = el.pid ? (getNative().getProcessName(el.pid) ?? '') : ''
-    const parents = getNative().getParentChain(x, y, 10)
-
-    // Find the window title from the parent chain
-    const windowParent = parents.find((p) => p.role === 'AXWindow')
-    const windowTitle = windowParent?.title || ''
-
-    return { name: processName, windowTitle }
-  } catch (error) {
-    log.error('AX app info query failed:', error)
-    return { name: '', windowTitle: '' }
+    log.error('AX click context query failed:', error)
+    return { element: null, app: { name: '', windowTitle: '' } }
   }
 }
 
 // --- Helpers ---
 
 function roleToControlType(role: string | null): number {
-  // Map AX roles to numeric control types for consistency with the shared type
   const roleMap: Record<string, number> = {
     AXButton: 50000,
     AXCheckBox: 50002,

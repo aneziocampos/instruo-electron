@@ -54,9 +54,9 @@ export function startRecording(): void {
   }
 }
 
-export function stopRecording(): void {
+export async function stopRecording(): Promise<void> {
   stopHooks()
-  recordingEngine.stop()
+  await recordingEngine.stop()
   setIdleMenu()
 
   // Show window with review

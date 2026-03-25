@@ -149,7 +149,6 @@ async function uploadStep(guideSlug: string, step: CapturedStep): Promise<void> 
 // --- Full Guide Upload (with retry + progress) ---
 
 export type UploadProgressCallback = (uploaded: number, total: number) => void
-export type UploadErrorCallback = (error: Error, stepIndex: number) => void
 
 export async function uploadGuide(
   params: GuideUploadParams,

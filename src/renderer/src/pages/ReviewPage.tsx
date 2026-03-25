@@ -14,7 +14,6 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
   const [guideTitle, setGuideTitle] = useState('')
   const [guideType, setGuideType] = useState<'linear' | 'interactive'>('linear')
   const [aiWriter, setAiWriter] = useState<string | null>(null)
-  const [_teamId] = useState<string | null>(null)
   const [usage, setUsage] = useState<UsageResponse | null>(null)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
@@ -42,9 +41,12 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
   }, [])
 
   const handleDeleteStep = useCallback((index: number) => {
-    setSteps((prev) => prev.filter((_, i) => i !== index))
-    setSelectedIndex((prev) => Math.min(prev, steps.length - 2))
-  }, [steps.length])
+    setSteps((prev) => {
+      const next = prev.filter((_, i) => i !== index)
+      setSelectedIndex((prevIdx) => Math.min(prevIdx, Math.max(0, next.length - 1)))
+      return next
+    })
+  }, [])
 
   const handleMoveUp = useCallback((index: number) => {
     if (index === 0) return
@@ -72,7 +74,7 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
       guideType,
       aiWriter,
       customAiWriterId: null,
-      teamId: _teamId
+      teamId: null
     })
   }
 
@@ -146,7 +148,7 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
             <div
               key={step.id}
               onClick={() => setSelectedIndex(index)}
-              className={`flex items-start gap-3 px-4 py-3 cursor-pointer border-b border-border transition-colors ${
+              className={`group flex items-start gap-3 px-4 py-3 cursor-pointer border-b border-border transition-colors ${
                 index === selectedIndex ? 'bg-ink-elevated' : 'hover:bg-ink-soft'
               }`}
             >

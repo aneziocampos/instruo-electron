@@ -3,7 +3,7 @@ import * as authManager from './auth-manager'
 import { exchangeAuthCode } from './api-client'
 
 export function handleDeepLink(url: string): void {
-  log.info('Deep link received:', url)
+  log.info('Deep link received:', url.replace(/code=[^&]+/, 'code=REDACTED'))
 
   try {
     const parsed = new URL(url)

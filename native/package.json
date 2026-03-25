@@ -1,0 +1,16 @@
+{
+  "name": "instruo-native",
+  "version": "0.1.0",
+  "private": true,
+  "napi": {
+    "name": "instruo-native",
+    "triples": {}
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  },
+  "scripts": {
+    "build": "napi build --release --platform",
+    "build:debug": "napi build --platform"
+  }
+}

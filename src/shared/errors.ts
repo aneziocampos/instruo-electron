@@ -1,6 +1,5 @@
 export type AppError =
   | { code: 'AUTH_EXPIRED'; message: string }
-  | { code: 'PLAN_LIMIT_REACHED'; message: string }
   | { code: 'OPERATION_FAILED'; message: string }
 
 export type Result<T, E = AppError> =

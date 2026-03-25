@@ -91,7 +91,3 @@ export function setPausedMenu(stepCount: number): void {
   )
 }
 
-export function destroyTray(): void {
-  tray?.destroy()
-  tray = null
-}

@@ -71,9 +71,10 @@ function createWindow(): void {
 
   // Prevent navigation to external URLs
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith('file://') && !url.startsWith('http://localhost')) {
-      event.preventDefault()
-    }
+    if (url.startsWith('file://')) return
+    const { is } = require('@electron-toolkit/utils')
+    if (is.dev && url.startsWith('http://localhost:')) return
+    event.preventDefault()
   })
 
   // Block new windows — open allowed external links in default browser

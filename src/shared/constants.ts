@@ -13,14 +13,7 @@ export const CLICK_CIRCLE_STROKE = '#ef4444'
 export const CLICK_CIRCLE_OUTER_STROKE = '#ffffff'
 export const HIGHLIGHT_LINE_WIDTH = 3
 export const SCREENSHOT_JPEG_QUALITY = 80
-export const MAX_SCREENSHOT_DIMENSION = 1920
-
 export const DOUBLE_CLICK_THRESHOLD_MS = 500
-export const KEYSTROKE_DEBOUNCE_MS = 300
-export const UIA_TIMEOUT_MS = 1000
-
-export const CRASH_RECOVERY_DEBOUNCE_MS = 1000
-export const AUTH_CODE_TIMEOUT_MS = 60_000
 export const AUTH_UI_TIMEOUT_MS = 60_000
 
 export const HOTKEY = 'CommandOrControl+Shift+R'

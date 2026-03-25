@@ -32,14 +32,6 @@ export function upgradeLastStepToDoubleClick(): boolean {
   return true
 }
 
-export function updateLastStepDescription(description: string, typedValue: string | null): void {
-  if (steps.length === 0) return
-  const last = steps[steps.length - 1]
-  last.description = description
-  last.typedValue = typedValue
-  schedulePersist()
-}
-
 export function clearSteps(): void {
   steps = []
   cancelPersist()

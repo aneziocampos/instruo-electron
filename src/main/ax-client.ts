@@ -11,17 +11,6 @@ function getNative(): typeof import('instruo-native') {
   return native!
 }
 
-// --- Permission ---
-
-export function checkAccessibilityPermission(prompt: boolean): boolean {
-  try {
-    return getNative().checkAccessibility(prompt)
-  } catch (error) {
-    log.error('Failed to check accessibility permission:', error)
-    return false
-  }
-}
-
 // --- Unified Element + App Info Query (single set of FFI calls) ---
 
 export interface ClickContext {

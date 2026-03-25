@@ -41,14 +41,3 @@ export interface IpcEventChannels {
 // --- Type helpers for enforcing the contract ---
 
 export type InvokeChannel = keyof IpcInvokeChannels
-export type EventChannel = keyof IpcEventChannels
-
-export type TypedInvoke = <C extends InvokeChannel>(
-  channel: C,
-  ...args: IpcInvokeChannels[C]['args']
-) => Promise<IpcInvokeChannels[C]['return']>
-
-export type TypedOn = <C extends EventChannel>(
-  channel: C,
-  callback: (...args: IpcEventChannels[C]['args']) => void
-) => () => void

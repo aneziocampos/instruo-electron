@@ -20,10 +20,6 @@ async function ensureSessionDir(): Promise<void> {
   sessionDirReady = true
 }
 
-export function resetSessionDir(): void {
-  sessionDirReady = false
-}
-
 /**
  * Annotate a screenshot with a red click circle and save to temp file.
  * P2: Accepts width/height from caller — no double JPEG decode.

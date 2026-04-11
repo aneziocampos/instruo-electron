@@ -1,4 +1,4 @@
-import { ipcMain, shell, systemPreferences, desktopCapturer, WebFrameMain } from 'electron'
+import { ipcMain, shell, systemPreferences, WebFrameMain } from 'electron'
 import { is } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { ALLOWED_EXTERNAL_HOSTS, APP_BASE_URL } from '../shared/constants'
@@ -170,6 +170,7 @@ export function registerIpcHandlers(getMainWindow: () => Electron.BrowserWindow 
   })
 
   secureHandle('permission:request-screen', async () => {
+    const { desktopCapturer } = require('electron')
     await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
   })
 }

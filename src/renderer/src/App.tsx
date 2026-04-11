@@ -64,12 +64,6 @@ export function App() {
   }, [])
 
   const handleStartRecording = useCallback(async () => {
-    // Trigger macOS permission prompts if not yet granted (non-blocking).
-    // macOS will show its own system dialogs; we don't gate on the result
-    // because systemPreferences APIs are unreliable with ad-hoc signatures.
-    window.electronAPI.requestAccessibilityPermission()
-    window.electronAPI.requestScreenPermission()
-
     setView('countdown')
     const cancelToken = { canceled: false }
     countdownCancelRef.current = cancelToken

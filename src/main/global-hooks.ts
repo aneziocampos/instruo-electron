@@ -19,11 +19,15 @@ function getHook(): typeof import('uiohook-napi') {
 export function startHooks(): void {
   if (isHookActive) return
 
-  const { uIOhook } = getHook()
-  uIOhook.on('mousedown', handleMouseDown)
-  uIOhook.start()
-  isHookActive = true
-  log.info('Global hooks started')
+  try {
+    const { uIOhook } = getHook()
+    uIOhook.on('mousedown', handleMouseDown)
+    uIOhook.start()
+    isHookActive = true
+    log.info('Global hooks started')
+  } catch (error) {
+    log.error('Failed to start global hooks:', error)
+  }
 }
 
 export function stopHooks(): void {

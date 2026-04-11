@@ -159,7 +159,7 @@ export function App() {
   }
 
   if (view === 'recording') {
-    const hotkeyDisplay = process.platform === 'darwin' ? 'Cmd+Shift+R' : 'Ctrl+Shift+R'
+    const hotkeyDisplay = navigator.platform.includes('Mac') ? 'Cmd+Shift+R' : 'Ctrl+Shift+R'
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="w-4 h-4 bg-accent rounded-full animate-pulse mb-4" />

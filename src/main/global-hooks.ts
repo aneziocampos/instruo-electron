@@ -1,3 +1,4 @@
+import { app } from 'electron'
 import log from 'electron-log'
 import * as recordingEngine from './recording-engine'
 import { captureScreenshot } from './screenshot-capture'
@@ -16,8 +17,20 @@ function getHook(): typeof import('uiohook-napi') {
 
 // --- Start / Stop ---
 
-export function startHooks(): void {
-  if (isHookActive) return
+export function startHooks(): boolean {
+  if (isHookActive) return true
+
+  // macOS Tahoe attributes accessibility permissions to the "responsible process"
+  // (Terminal.app) rather than Electron when launched via npm run dev.
+  // Global hooks cannot work in this mode — use packaged app to test recording.
+  if (process.platform === 'darwin' && !app.isPackaged) {
+    log.warn(
+      'Global hooks disabled in macOS dev mode — accessibility permission ' +
+      'cannot be granted to Terminal-spawned processes on macOS Tahoe. ' +
+      'Run "npm run dev:mac-hooks" to test recording with a packaged build.'
+    )
+    return false
+  }
 
   try {
     const { uIOhook } = getHook()
@@ -25,8 +38,10 @@ export function startHooks(): void {
     uIOhook.start()
     isHookActive = true
     log.info('Global hooks started')
+    return true
   } catch (error) {
     log.error('Failed to start global hooks:', error)
+    return false
   }
 }
 

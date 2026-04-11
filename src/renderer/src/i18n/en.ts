@@ -62,6 +62,7 @@ export const en = {
   'success.recordAnother': 'Record another',
   'success.aiPolishing': 'AI is polishing your guide. Titles may be updated shortly.',
 
+  'error.hooksFailed': 'Recording requires accessibility permission. In dev mode, use "npm run dev:mac-hooks" to test with a packaged build.',
   'error.network': 'Network error. Check your connection.',
   'error.planLimit': 'You\'ve reached your plan\'s guide limit.',
   'error.upgrade': 'Upgrade plan',

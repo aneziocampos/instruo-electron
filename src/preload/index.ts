@@ -57,6 +57,11 @@ const api = {
     return () => ipcRenderer.removeListener('upload:progress', handler)
   },
 
+  onHooksFailed: (callback: () => void): (() => void) => {
+    const handler = (): void => callback()
+    ipcRenderer.on('recording:hooks-failed', handler)
+    return () => ipcRenderer.removeListener('recording:hooks-failed', handler)
+  }
 } as const
 
 contextBridge.exposeInMainWorld('electronAPI', api)

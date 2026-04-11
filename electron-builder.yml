@@ -35,6 +35,8 @@ mac:
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSAccessibilityUsageDescription: "Instruo needs accessibility access to capture your mouse clicks during recording."
 
 dmg:
   contents:

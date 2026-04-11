@@ -116,6 +116,7 @@ export function registerIpcHandlers(getMainWindow: () => Electron.BrowserWindow 
 
       return ok(result)
     } catch (error) {
+      log.error('Guide upload failed:', error instanceof Error ? error.message : error)
       return err({
         code: 'OPERATION_FAILED',
         message: error instanceof Error ? error.message : 'Upload failed'
@@ -157,11 +158,14 @@ export function registerIpcHandlers(getMainWindow: () => Electron.BrowserWindow 
 
   // Permissions (macOS)
   secureHandle('permission:check-accessibility', () => {
-    return systemPreferences.isTrustedAccessibilityClient(false)
+    const trusted = systemPreferences.isTrustedAccessibilityClient(false)
+    log.info(`Permission check — accessibility: ${trusted}`)
+    return trusted
   })
 
   secureHandle('permission:check-screen', () => {
     const status = systemPreferences.getMediaAccessStatus('screen')
+    log.info(`Permission check — screen: "${status}"`)
     return status === 'granted'
   })
 

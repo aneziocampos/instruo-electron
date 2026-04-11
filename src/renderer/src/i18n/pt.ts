@@ -64,6 +64,7 @@ export const pt: Record<TranslationKey, string> = {
   'success.recordAnother': 'Gravar outro',
   'success.aiPolishing': 'A IA esta polindo seu guia. Os titulos podem ser atualizados em breve.',
 
+  'error.hooksFailed': 'Gravacao requer permissao de acessibilidade. No modo de desenvolvimento, use "npm run dev:mac-hooks" para testar com um build empacotado.',
   'error.network': 'Erro de rede. Verifique sua conexao.',
   'error.planLimit': 'Voce atingiu o limite de guias do seu plano.',
   'error.upgrade': 'Fazer upgrade',

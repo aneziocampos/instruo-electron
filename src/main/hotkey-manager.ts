@@ -42,7 +42,20 @@ function handleHotkey(): void {
 
 export function startRecording(): void {
   recordingEngine.start()
-  startHooks()
+  const hooksStarted = startHooks()
+
+  if (!hooksStarted) {
+    // Hooks failed (macOS dev mode or missing permissions) — cancel and show window
+    recordingEngine.cancel()
+    const mainWindow = getMainWindow()
+    if (mainWindow) {
+      mainWindow.show()
+      mainWindow.focus()
+      mainWindow.webContents.send('recording:hooks-failed')
+    }
+    return
+  }
+
   setRecordingMenu(0)
 
   // Minimize to tray

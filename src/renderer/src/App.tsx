@@ -14,6 +14,7 @@ export function App() {
   const [countdownNumber, setCountdownNumber] = useState(3)
   const [recordingState, setRecordingState] = useState<RecordingState>({ status: 'idle' })
   const [reviewSteps, setReviewSteps] = useState<StepThumbnail[]>([])
+  const [hooksError, setHooksError] = useState(false)
   const [guideUrl, setGuideUrl] = useState('')
   const [uploadProgress, setUploadProgress] = useState({ uploaded: 0, total: 0 })
 
@@ -61,6 +62,15 @@ export function App() {
       setUploadProgress({ uploaded, total })
     })
     return unsubProgress
+  }, [])
+
+  // Listen for hooks failure (macOS dev mode — accessibility can't be granted)
+  useEffect(() => {
+    const unsub = window.electronAPI.onHooksFailed(() => {
+      setHooksError(true)
+      setView('idle')
+    })
+    return unsub
   }, [])
 
   const handleStartRecording = useCallback(async () => {
@@ -204,9 +214,16 @@ export function App() {
   }
 
   return (
-    <IdlePage
-      onStartRecording={handleStartRecording}
-      onSignOut={() => setView('auth')}
-    />
+    <>
+      {hooksError && (
+        <div className="fixed top-0 left-0 right-0 bg-danger/10 border-b border-danger/30 px-4 py-2 z-50">
+          <p className="text-danger text-xs text-center">{t('error.hooksFailed')}</p>
+        </div>
+      )}
+      <IdlePage
+        onStartRecording={() => { setHooksError(false); handleStartRecording() }}
+        onSignOut={() => setView('auth')}
+      />
+    </>
   )
 }

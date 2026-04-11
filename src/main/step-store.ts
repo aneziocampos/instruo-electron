@@ -1,8 +1,10 @@
-import { writeFile, unlink, mkdir, access } from 'fs/promises'
+import { writeFile, unlink, mkdir, access, readFile } from 'fs/promises'
 import { join } from 'path'
 import { app } from 'electron'
 import log from 'electron-log'
 import type { CapturedStep, StepThumbnail } from '../shared/types'
+
+const THUMBNAIL_WIDTH = 200
 
 const SESSION_DIR = join(app.getPath('temp'), 'instruo-session')
 const SESSION_FILE = join(SESSION_DIR, 'session.jsonl')
@@ -38,15 +40,33 @@ export function clearSteps(): void {
   cleanupSessionDir().catch((e) => log.error('Failed to cleanup session dir:', e))
 }
 
-export function getStepThumbnails(): StepThumbnail[] {
-  return steps.map((s) => ({
+export async function getStepThumbnails(): Promise<StepThumbnail[]> {
+  return Promise.all(steps.map(async (s) => ({
     id: s.id,
     title: s.title,
     description: s.description,
     actionType: s.actionType,
-    thumbnailDataUrl: '', // TODO: generate thumbnails from screenshotPath
+    thumbnailDataUrl: await generateThumbnail(s.screenshotPath),
     app: s.app
-  }))
+  })))
+}
+
+async function generateThumbnail(screenshotPath: string): Promise<string> {
+  try {
+    const sharp = require('sharp')
+    const resized = await sharp(screenshotPath)
+      .resize({ width: THUMBNAIL_WIDTH })
+      .jpeg({ quality: 70 })
+      .toBuffer()
+    return `data:image/jpeg;base64,${resized.toString('base64')}`
+  } catch {
+    try {
+      const raw = await readFile(screenshotPath)
+      return `data:image/jpeg;base64,${raw.toString('base64')}`
+    } catch {
+      return ''
+    }
+  }
 }
 
 // --- Persistence (JSONL, debounced 1/sec) ---

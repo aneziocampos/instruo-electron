@@ -43,7 +43,8 @@ export async function stop(): Promise<void> {
   // Flush to disk before showing review
   await stepStore.flush().catch((e) => log.error('Failed to flush steps on stop:', e))
 
-  state = { status: 'review', steps: stepStore.getStepThumbnails() }
+  const thumbnails = await stepStore.getStepThumbnails()
+  state = { status: 'review', steps: thumbnails }
   notifyRenderer()
   log.info(`Recording stopped (${stepStore.getStepCount()} steps)`)
 }
@@ -82,7 +83,7 @@ export function cancel(): void {
   log.info('Recording cancelled')
 }
 
-export function getStepThumbnails(): StepThumbnail[] {
+export function getStepThumbnails(): Promise<StepThumbnail[]> {
   return stepStore.getStepThumbnails()
 }
 

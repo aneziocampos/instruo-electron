@@ -1,6 +1,7 @@
 import { safeStorage } from 'electron'
 import Store from 'electron-store'
 import { randomBytes } from 'crypto'
+import { clearSteps } from './step-store'
 
 const store = new Store<{ encryptedToken: string | null }>({
   name: 'auth',
@@ -51,7 +52,7 @@ export function clearToken(): void {
 export function signOut(): void {
   clearToken()
   pendingStates.clear()
-  // TODO: clear temp screenshots and session data
+  clearSteps()
 }
 
 export function generateState(): string {

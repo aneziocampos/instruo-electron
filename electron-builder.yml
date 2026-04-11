@@ -5,11 +5,11 @@ copyright: Copyright 2026 Instruo
 asar: true
 asarUnpack:
   - "node_modules/uiohook-napi/**"
+  - "node_modules/@img/**"
   - "node_modules/node-winautomation/**"
   - "**/*.node"
 
-npmRebuild: true
-nativeRebuilder: sequential
+npmRebuild: false
 
 directories:
   buildResources: build

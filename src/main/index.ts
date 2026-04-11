@@ -95,12 +95,15 @@ function createWindow(): void {
 
 // --- CSP Headers ---
 function setupCSP(): void {
+  // Dev mode needs 'unsafe-inline' for Vite's HMR script injection
+  const scriptSrc = is.dev ? "'self' 'unsafe-inline'" : "'self'"
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://app.instruo.ai; font-src 'self'; object-src 'none'; form-action 'none'"
+          `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://app.instruo.ai; font-src 'self'; object-src 'none'; form-action 'none'`
         ]
       }
     })

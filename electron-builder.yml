@@ -51,8 +51,6 @@ win:
       arch:
         - x64
   icon: resources/icon.ico
-  signingHashAlgorithms:
-    - sha256
 
 nsis:
   oneClick: true

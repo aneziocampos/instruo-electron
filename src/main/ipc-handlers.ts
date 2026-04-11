@@ -38,7 +38,10 @@ function secureHandle<C extends InvokeChannel>(
 
 // --- Register All Handlers ---
 
-export function registerIpcHandlers(): void {
+let getWin: (() => Electron.BrowserWindow | null) | null = null
+
+export function registerIpcHandlers(getMainWindow: () => Electron.BrowserWindow | null): void {
+  getWin = getMainWindow
   // Auth
   secureHandle('auth:get-token', () => {
     try {
@@ -103,8 +106,7 @@ export function registerIpcHandlers(): void {
         })
         .filter((s): s is NonNullable<typeof s> => s !== null)
 
-      const { getMainWindow: getWin } = require('./index')
-      const mainWindow = getWin()
+      const mainWindow = getWin?.()
 
       const result = await apiClient.uploadGuide(params, steps, (uploaded, total) => {
         if (mainWindow && !mainWindow.isDestroyed()) {

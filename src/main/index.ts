@@ -6,6 +6,7 @@ import { registerIpcHandlers } from './ipc-handlers'
 import { handleDeepLink } from './deep-link'
 import { createTray } from './tray-manager'
 import { registerHotkey } from './hotkey-manager'
+import * as stepStore from './step-store'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -132,7 +133,7 @@ export function getMainWindow(): BrowserWindow | null {
 // --- App Lifecycle ---
 app.whenReady().then(() => {
   setupCSP()
-  registerIpcHandlers()
+  registerIpcHandlers(getMainWindow)
   registerHotkey()
   createTray()
   createWindow()
@@ -159,7 +160,6 @@ app.on('open-url', (_event, url) => {
 
 // Flush step store on quit to prevent data loss from debounce gap
 app.on('will-quit', (event) => {
-  const stepStore = require('./step-store')
   if (stepStore.getStepCount() > 0) {
     event.preventDefault()
     stepStore.flush().finally(() => app.exit(0))

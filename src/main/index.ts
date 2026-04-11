@@ -72,7 +72,6 @@ function createWindow(): void {
   // Prevent navigation to external URLs
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (url.startsWith('file://')) return
-    const { is } = require('@electron-toolkit/utils')
     if (is.dev && url.startsWith('http://localhost:')) return
     event.preventDefault()
   })
@@ -100,7 +99,7 @@ function setupCSP(): void {
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://app.instruo.ai; font-src 'self' https://fonts.gstatic.com; object-src 'none'; form-action 'none'"
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://app.instruo.ai; font-src 'self'; object-src 'none'; form-action 'none'"
         ]
       }
     })

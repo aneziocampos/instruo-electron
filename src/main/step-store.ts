@@ -1,4 +1,4 @@
-import { writeFile, unlink, mkdir, access, readFile } from 'fs/promises'
+import { writeFile, mkdir, readFile, rm } from 'fs/promises'
 import { join } from 'path'
 import { app } from 'electron'
 import log from 'electron-log'
@@ -88,28 +88,12 @@ function cancelPersist(): void {
 
 async function persistSession(): Promise<void> {
   await mkdir(SESSION_DIR, { recursive: true })
-  const lines = steps.map((s) => JSON.stringify({
-    id: s.id,
-    timestamp: s.timestamp,
-    title: s.title,
-    description: s.description,
-    actionType: s.actionType,
-    typedValue: s.typedValue,
-    element: s.element,
-    screenshotPath: s.screenshotPath,
-    click: s.click,
-    screen: s.screen,
-    app: s.app
-  }))
+  const lines = steps.map((s) => JSON.stringify(s))
   await writeFile(SESSION_FILE, lines.join('\n') + '\n')
 }
 
 async function cleanupSessionDir(): Promise<void> {
-  try {
-    await access(SESSION_FILE).then(() => unlink(SESSION_FILE)).catch(() => {})
-  } catch {
-    // Ignore cleanup errors
-  }
+  await rm(SESSION_DIR, { recursive: true, force: true }).catch(() => {})
 }
 
 // --- Flush on demand (before upload or stop) ---

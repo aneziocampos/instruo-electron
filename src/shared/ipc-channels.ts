@@ -1,4 +1,4 @@
-import type { Result, AppError } from './errors'
+import type { Result } from './errors'
 import type {
   RecordingState,
   StepThumbnail,
@@ -16,6 +16,7 @@ export interface IpcInvokeChannels {
   'recording:start': { args: []; return: void }
   'recording:stop': { args: []; return: void }
   'recording:pause': { args: []; return: void }
+  'recording:resume': { args: []; return: void }
   'recording:cancel': { args: []; return: void }
   'recording:get-state': { args: []; return: RecordingState }
   'recording:get-steps': { args: []; return: StepThumbnail[] }
@@ -34,8 +35,6 @@ export interface IpcEventChannels {
   'auth:authenticated': { args: [] }
   'recording:status-changed': { args: [state: RecordingState] }
   'upload:progress': { args: [uploaded: number, total: number] }
-  'upload:error': { args: [error: AppError] }
-  'upload:complete': { args: [guideUrl: string] }
 }
 
 // --- Type helpers for enforcing the contract ---

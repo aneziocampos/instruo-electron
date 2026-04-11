@@ -18,7 +18,9 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
   useEffect(() => {
+    let active = true
     window.electronAPI.fetchUsage().then((result) => {
+      if (!active) return
       if (result.ok) {
         setUsage(result.value)
         if (result.value.defaultAiWriter) {
@@ -26,6 +28,7 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
         }
       }
     })
+    return () => { active = false }
   }, [])
 
   // Auto-generate guide title from first step
@@ -59,14 +62,14 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
   }, [])
 
   const handleMoveDown = useCallback((index: number) => {
-    if (index >= steps.length - 1) return
     setSteps((prev) => {
+      if (index >= prev.length - 1) return prev
       const next = [...prev]
       ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
       return next
     })
     setSelectedIndex(index + 1)
-  }, [steps.length])
+  }, [])
 
   const handleSave = () => {
     onUpload({
@@ -74,7 +77,8 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
       guideType,
       aiWriter,
       customAiWriterId: null,
-      teamId: null
+      teamId: null,
+      editedSteps: steps.map((s) => ({ id: s.id, title: s.title, description: s.description }))
     })
   }
 
@@ -215,8 +219,8 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
             />
           ) : (
             <div className="text-text-tertiary text-sm text-center">
-              <p>Screenshot preview</p>
-              <p className="text-xs mt-1">Available after recording</p>
+              <p>{t('review.screenshotPreview')}</p>
+              <p className="text-xs mt-1">{t('review.screenshotAvailable')}</p>
             </div>
           )}
         </div>
@@ -232,7 +236,7 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
             {t('review.discard')}
           </button>
           <span className="text-text-tertiary text-xs self-center">
-            {steps.length} steps
+            {t('review.stepsCount', { count: steps.length })}
           </span>
         </div>
         <button
@@ -253,7 +257,7 @@ export function ReviewPage({ steps: initialSteps, onUpload, onDiscard }: Props) 
                 onClick={() => setShowDiscardConfirm(false)}
                 className="text-text-secondary text-sm hover:text-text-primary transition-colors"
               >
-                Cancel
+                {t('review.cancel')}
               </button>
               <button
                 onClick={onDiscard}

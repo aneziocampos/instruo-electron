@@ -1,5 +1,4 @@
-import type { ElementInfo } from '../shared/types'
-import type { StepActionType } from '../shared/types'
+import type { ElementInfo, StepActionType } from '../shared/types'
 
 /**
  * Generate a human-readable step title from element metadata.
@@ -12,6 +11,10 @@ export function generateStepTitle(
   appContext: { name: string; windowTitle: string }
 ): string {
   const prefix = getActionPrefix(actionType)
+
+  if (element?.isPassword) {
+    return `${prefix} [password field]`
+  }
 
   if (!element) {
     // Layer 4 fallback: no element info

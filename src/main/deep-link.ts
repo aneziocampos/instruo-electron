@@ -1,9 +1,8 @@
 import log from 'electron-log'
 import * as authManager from './auth-manager'
-import { exchangeAuthCode } from './api-client'
 
 export function handleDeepLink(url: string): void {
-  log.info('Deep link received:', url.replace(/code=[^&]+/, 'code=REDACTED'))
+  log.info('Deep link received:', url.replace(/token=[^&]+/, 'token=REDACTED'))
 
   try {
     const parsed = new URL(url)
@@ -19,12 +18,12 @@ export function handleDeepLink(url: string): void {
   }
 }
 
-function handleAuthDeepLink(parsed: URL): void {
-  const code = parsed.searchParams.get('code')
+async function handleAuthDeepLink(parsed: URL): Promise<void> {
+  const token = parsed.searchParams.get('token')
   const state = parsed.searchParams.get('state')
 
-  if (!code || !state) {
-    log.warn('Auth deep link missing code or state')
+  if (!token || !state) {
+    log.warn('Auth deep link missing token or state')
     return
   }
 
@@ -40,24 +39,14 @@ function handleAuthDeepLink(parsed: URL): void {
     return
   }
 
-  // Exchange authorization code for token
-  exchangeCodeForToken(code)
-}
+  authManager.setToken(token)
 
-async function exchangeCodeForToken(code: string): Promise<void> {
-  try {
-    const token = await exchangeAuthCode(code)
-    authManager.setToken(token)
-
-    // Notify renderer — import getMainWindow lazily to avoid circular dependency
-    const { getMainWindow } = await import('./index')
-    const mainWindow = getMainWindow()
-    if (mainWindow) {
-      mainWindow.webContents.send('auth:authenticated')
-    }
-
-    log.info('Auth code exchanged successfully')
-  } catch (error) {
-    log.error('Failed to exchange auth code:', error)
+  // Notify renderer
+  const { getMainWindow } = await import('./index')
+  const mainWindow = getMainWindow()
+  if (mainWindow) {
+    mainWindow.webContents.send('auth:authenticated')
   }
+
+  log.info('Desktop auth completed successfully')
 }

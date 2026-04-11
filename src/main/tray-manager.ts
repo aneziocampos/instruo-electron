@@ -72,11 +72,7 @@ export function setPausedMenu(stepCount: number): void {
     Menu.buildFromTemplate([
       {
         label: 'Resume Recording',
-        click: () => {
-          require('./recording-engine').resume()
-          require('./global-hooks').startHooks()
-          setRecordingMenu(stepCount)
-        }
+        click: () => getHotkeyManager().resumeRecording()
       },
       {
         label: `Stop Recording (${stepCount} steps)`,

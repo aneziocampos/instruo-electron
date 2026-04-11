@@ -33,26 +33,6 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<Respon
   return response
 }
 
-// --- Auth ---
-
-export async function exchangeAuthCode(code: string): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}/auth/exchange`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code })
-  })
-
-  if (!response.ok) {
-    throw new Error(`Auth code exchange failed: ${response.status}`)
-  }
-
-  const data = (await response.json()) as { token?: string }
-  if (!data.token || typeof data.token !== 'string') {
-    throw new Error('Invalid auth response: missing token')
-  }
-  return data.token
-}
-
 interface UsageApiResponse {
   user: { name: string; email: string }
   plan: { name: string; guide_limit: number | null; guides_used: number }

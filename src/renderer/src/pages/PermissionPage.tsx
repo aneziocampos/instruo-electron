@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { t } from '../i18n'
 
 interface Props {
   onAllGranted: () => void
@@ -8,53 +9,49 @@ export function PermissionPage({ onAllGranted }: Props) {
   const [accessibilityGranted, setAccessibilityGranted] = useState(false)
   const [screenGranted, setScreenGranted] = useState(false)
   const [checking, setChecking] = useState(true)
+  const onAllGrantedRef = useRef(onAllGranted)
+  onAllGrantedRef.current = onAllGranted
 
-  const checkPermissions = useCallback(async () => {
-    try {
+  useEffect(() => {
+    let active = true
+    const check = async () => {
       const [acc, scr] = await Promise.all([
         window.electronAPI.checkAccessibilityPermission(),
         window.electronAPI.checkScreenPermission()
-      ])
+      ]).catch(() => [false, false])
+      if (!active) return
       setAccessibilityGranted(acc)
       setScreenGranted(scr)
       setChecking(false)
-
-      if (acc && scr) {
-        onAllGranted()
-      }
-    } catch {
-      setChecking(false)
+      if (acc && scr) onAllGrantedRef.current()
     }
-  }, [onAllGranted])
-
-  useEffect(() => {
-    checkPermissions()
-    const interval = setInterval(checkPermissions, 2000)
-    return () => clearInterval(interval)
-  }, [checkPermissions])
+    check()
+    const interval = setInterval(check, 2000)
+    return () => { active = false; clearInterval(interval) }
+  }, [])
 
   const allGranted = accessibilityGranted && screenGranted
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-8">
       <h1 className="text-2xl font-display font-bold text-text-primary mb-2">
-        Permissions Required
+        {t('permission.title')}
       </h1>
       <p className="text-text-secondary text-sm mb-8 text-center max-w-xs">
-        Instruo needs these permissions to record your screen and detect what you click on.
+        {t('permission.description')}
       </p>
 
       <div className="w-full max-w-xs space-y-4">
         <PermissionRow
-          label="Accessibility"
-          description="Detect UI elements and capture keyboard input"
+          label={t('permission.accessibility')}
+          description={t('permission.accessibilityDesc')}
           granted={accessibilityGranted}
           onGrant={() => window.electronAPI.requestAccessibilityPermission()}
         />
 
         <PermissionRow
-          label="Screen Recording"
-          description="Capture screenshots during recording"
+          label={t('permission.screen')}
+          description={t('permission.screenDesc')}
           granted={screenGranted}
           onGrant={() => window.electronAPI.requestScreenPermission()}
         />
@@ -62,16 +59,16 @@ export function PermissionPage({ onAllGranted }: Props) {
 
       {allGranted && (
         <button
-          onClick={onAllGranted}
+          onClick={() => onAllGrantedRef.current()}
           className="mt-8 bg-accent hover:bg-accent-hover text-ink font-semibold py-3 px-8 rounded-lg transition-colors"
         >
-          Continue
+          {t('permission.continue')}
         </button>
       )}
 
       {!allGranted && !checking && (
         <p className="text-text-tertiary text-xs mt-6 text-center max-w-xs">
-          Grant permissions in System Settings, then return here. This page updates automatically.
+          {t('permission.hint')}
         </p>
       )}
     </div>
@@ -102,7 +99,7 @@ function PermissionRow({
           onClick={onGrant}
           className="text-accent text-xs font-medium hover:underline"
         >
-          Grant
+          {t('permission.grant')}
         </button>
       )}
     </div>

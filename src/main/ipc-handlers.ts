@@ -1,4 +1,5 @@
-import { ipcMain, shell, WebFrameMain } from 'electron'
+import { ipcMain, shell, systemPreferences, desktopCapturer, WebFrameMain } from 'electron'
+import { is } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { ALLOWED_EXTERNAL_HOSTS, APP_BASE_URL } from '../shared/constants'
 import { ok, err } from '../shared/errors'
@@ -7,7 +8,7 @@ import * as authManager from './auth-manager'
 import * as apiClient from './api-client'
 import * as recordingEngine from './recording-engine'
 import * as stepStore from './step-store'
-import { startRecording, stopRecording, pauseRecording, cancelRecording } from './hotkey-manager'
+import { startRecording, stopRecording, pauseRecording, resumeRecording, cancelRecording } from './hotkey-manager'
 
 // --- Secure Handler Wrapper (typed) ---
 
@@ -15,8 +16,6 @@ function isValidSender(frame: WebFrameMain | null): boolean {
   if (!frame) return false
   const url = frame.url
   if (url.startsWith('file://')) return true
-  // Only allow localhost in dev mode (note: colon prevents localhost.evil.com match)
-  const { is } = require('@electron-toolkit/utils')
   if (is.dev && url.startsWith('http://localhost:')) return true
   return false
 }
@@ -75,6 +74,10 @@ export function registerIpcHandlers(): void {
     pauseRecording()
   })
 
+  secureHandle('recording:resume', () => {
+    resumeRecording()
+  })
+
   secureHandle('recording:cancel', () => {
     cancelRecording()
   })
@@ -87,10 +90,19 @@ export function registerIpcHandlers(): void {
     return recordingEngine.getStepThumbnails()
   })
 
-  // Guide upload — with progress events wired to renderer
+  // Guide upload — apply renderer edits, then upload with progress
   secureHandle('guide:upload-all', async (_event, params) => {
     try {
-      const steps = stepStore.getSteps()
+      // Apply renderer-side edits (title, description, deletions, reorderings)
+      const originalSteps = stepStore.getSteps()
+      const steps = params.editedSteps
+        .map((edit) => {
+          const original = originalSteps.find((s) => s.id === edit.id)
+          if (!original) return null
+          return { ...original, title: edit.title, description: edit.description }
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null)
+
       const { getMainWindow: getWin } = require('./index')
       const mainWindow = getWin()
 
@@ -100,20 +112,8 @@ export function registerIpcHandlers(): void {
         }
       })
 
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('upload:complete', result.url)
-      }
-
       return ok(result)
     } catch (error) {
-      const { getMainWindow: getWin } = require('./index')
-      const mainWindow = getWin()
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('upload:error', {
-          code: 'OPERATION_FAILED',
-          message: error instanceof Error ? error.message : 'Upload failed'
-        })
-      }
       return err({
         code: 'OPERATION_FAILED',
         message: error instanceof Error ? error.message : 'Upload failed'
@@ -155,24 +155,19 @@ export function registerIpcHandlers(): void {
 
   // Permissions (macOS)
   secureHandle('permission:check-accessibility', () => {
-    const { systemPreferences } = require('electron')
     return systemPreferences.isTrustedAccessibilityClient(false)
   })
 
   secureHandle('permission:check-screen', () => {
-    const { systemPreferences } = require('electron')
     const status = systemPreferences.getMediaAccessStatus('screen')
     return status === 'granted'
   })
 
   secureHandle('permission:request-accessibility', () => {
-    const { systemPreferences } = require('electron')
     systemPreferences.isTrustedAccessibilityClient(true)
   })
 
   secureHandle('permission:request-screen', async () => {
-    // Trigger the screen recording permission prompt by requesting sources
-    const { desktopCapturer } = require('electron')
     await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
   })
 }

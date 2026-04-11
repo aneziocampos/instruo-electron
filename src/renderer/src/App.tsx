@@ -4,6 +4,7 @@ import { IdlePage } from './pages/IdlePage'
 import { PermissionPage } from './pages/PermissionPage'
 import { ReviewPage } from './pages/ReviewPage'
 import { SuccessPage } from './pages/SuccessPage'
+import { t } from './i18n'
 import type { RecordingState, StepThumbnail, GuideUploadParams } from '../../shared/types'
 
 type AppView = 'loading' | 'auth' | 'permissions' | 'idle' | 'countdown' | 'recording' | 'review' | 'uploading' | 'success'
@@ -37,33 +38,29 @@ export function App() {
     return unsubscribe
   }, [])
 
-  // Listen for recording state changes from main process
+  // Listen for recording state changes from main process (stable — never re-subscribes)
+  const viewRef = useRef<AppView>(view)
+  viewRef.current = view
+
   useEffect(() => {
     const unsubscribe = window.electronAPI.onRecordingStatusChanged((state) => {
       setRecordingState(state)
       if (state.status === 'review') {
         setReviewSteps(state.steps)
         setView('review')
-      } else if (state.status === 'idle' && view === 'recording') {
+      } else if (state.status === 'idle' && viewRef.current === 'recording') {
         setView('idle')
       }
     })
     return unsubscribe
-  }, [view])
+  }, [])
 
-  // P1-011: Listen for upload progress events from main process
+  // Listen for upload progress events from main process
   useEffect(() => {
     const unsubProgress = window.electronAPI.onUploadProgress((uploaded, total) => {
       setUploadProgress({ uploaded, total })
     })
-    const unsubComplete = window.electronAPI.onUploadComplete((url) => {
-      setGuideUrl(url)
-      setView('success')
-    })
-    const unsubError = window.electronAPI.onUploadError(() => {
-      setView('review') // Back to review on error
-    })
-    return () => { unsubProgress(); unsubComplete(); unsubError() }
+    return unsubProgress
   }, [])
 
   const handleStartRecording = useCallback(async () => {
@@ -115,8 +112,9 @@ export function App() {
     if (result.ok) {
       setGuideUrl(result.value.url)
       setView('success')
+    } else {
+      setView('review')
     }
-    // Errors also handled by upload:error event listener above
   }, [reviewSteps.length])
 
   const handleDiscard = useCallback(() => {
@@ -151,27 +149,28 @@ export function App() {
   if (view === 'countdown') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-text-secondary text-sm mb-4">Recording starts in...</p>
+        <p className="text-text-secondary text-sm mb-4">{t('recording.countdown.title')}</p>
         <span className="text-8xl font-display font-bold text-accent animate-pulse">
           {countdownNumber}
         </span>
-        <p className="text-text-tertiary text-xs mt-8">Press Esc to cancel</p>
+        <p className="text-text-tertiary text-xs mt-8">{t('recording.countdown.cancel')}</p>
       </div>
     )
   }
 
   if (view === 'recording') {
+    const hotkeyDisplay = process.platform === 'darwin' ? 'Cmd+Shift+R' : 'Ctrl+Shift+R'
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="w-4 h-4 bg-accent rounded-full animate-pulse mb-4" />
-        <p className="text-text-primary text-lg font-display">Recording...</p>
+        <p className="text-text-primary text-lg font-display">{t('idle.recording')}</p>
         {recordingState.status === 'recording' && (
           <p className="text-text-secondary text-sm mt-2">
-            {recordingState.stepCount} steps captured
+            {t('idle.stepsCaptured', { count: recordingState.stepCount })}
           </p>
         )}
         <p className="text-text-tertiary text-xs mt-6">
-          {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+R to stop
+          {t('idle.hotkeyStop', { key: hotkeyDisplay })}
         </p>
       </div>
     )
@@ -198,7 +197,7 @@ export function App() {
             />
           </div>
           <p className="text-text-primary text-sm text-center">
-            Uploading step {uploadProgress.uploaded} of {uploadProgress.total}...
+            {t('upload.uploading', { current: uploadProgress.uploaded, total: uploadProgress.total })}
           </p>
         </div>
       </div>

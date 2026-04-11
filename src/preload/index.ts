@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { RecordingState, StepThumbnail, GuideUploadParams, UsageResponse, GuideResponse } from '../shared/types'
-import type { AppError, Result } from '../shared/errors'
+import type { Result } from '../shared/errors'
 
 const api = {
   // --- Auth (invoke) ---
@@ -12,6 +12,7 @@ const api = {
   startRecording: (): Promise<void> => ipcRenderer.invoke('recording:start'),
   stopRecording: (): Promise<void> => ipcRenderer.invoke('recording:stop'),
   pauseRecording: (): Promise<void> => ipcRenderer.invoke('recording:pause'),
+  resumeRecording: (): Promise<void> => ipcRenderer.invoke('recording:resume'),
   cancelRecording: (): Promise<void> => ipcRenderer.invoke('recording:cancel'),
   getRecordingState: (): Promise<RecordingState> => ipcRenderer.invoke('recording:get-state'),
   getRecordingSteps: (): Promise<StepThumbnail[]> => ipcRenderer.invoke('recording:get-steps'),
@@ -56,17 +57,6 @@ const api = {
     return () => ipcRenderer.removeListener('upload:progress', handler)
   },
 
-  onUploadError: (callback: (error: AppError) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, error: AppError): void => callback(error)
-    ipcRenderer.on('upload:error', handler)
-    return () => ipcRenderer.removeListener('upload:error', handler)
-  },
-
-  onUploadComplete: (callback: (guideUrl: string) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, guideUrl: string): void => callback(guideUrl)
-    ipcRenderer.on('upload:complete', handler)
-    return () => ipcRenderer.removeListener('upload:complete', handler)
-  }
 } as const
 
 contextBridge.exposeInMainWorld('electronAPI', api)

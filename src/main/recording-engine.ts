@@ -6,6 +6,7 @@ import { getMainWindow } from './index'
 
 let state: RecordingState = { status: 'idle' }
 let captureQueue: Promise<void> = Promise.resolve()
+let isTransitioning = false
 
 // --- Public API ---
 
@@ -14,6 +15,7 @@ export function getState(): RecordingState {
 }
 
 export function start(): void {
+  if (isTransitioning) return
   if (state.status !== 'idle') {
     log.warn(`Cannot start recording from state: ${state.status}`)
     return
@@ -28,25 +30,27 @@ export function start(): void {
 }
 
 export async function stop(): Promise<void> {
+  if (isTransitioning) return
   if (state.status !== 'recording' && state.status !== 'paused') {
     log.warn(`Cannot stop recording from state: ${state.status}`)
     return
   }
 
-  // P1-012: Transition to a non-recording state FIRST, then await queue
-  // This prevents in-flight captures from overwriting state back to 'recording'
-  state = { status: 'idle' } // Transitional — captures will see this and bail out
+  isTransitioning = true
+  try {
+    // Transition to a non-recording state FIRST, then await queue
+    state = { status: 'idle' } // Transitional — captures will see this and bail out
 
-  // Wait for any in-flight captures to finish
-  await captureQueue
+    await captureQueue
+    await stepStore.flush().catch((e) => log.error('Failed to flush steps on stop:', e))
 
-  // Flush to disk before showing review
-  await stepStore.flush().catch((e) => log.error('Failed to flush steps on stop:', e))
-
-  const thumbnails = await stepStore.getStepThumbnails()
-  state = { status: 'review', steps: thumbnails }
-  notifyRenderer()
-  log.info(`Recording stopped (${stepStore.getStepCount()} steps)`)
+    const thumbnails = await stepStore.getStepThumbnails()
+    state = { status: 'review', steps: thumbnails }
+    notifyRenderer()
+    log.info(`Recording stopped (${stepStore.getStepCount()} steps)`)
+  } finally {
+    isTransitioning = false
+  }
 }
 
 export function pause(): void {

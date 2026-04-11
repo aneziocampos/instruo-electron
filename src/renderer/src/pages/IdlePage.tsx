@@ -13,9 +13,11 @@ export function IdlePage({ onStartRecording, onSignOut }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let active = true
     window.electronAPI
       .fetchUsage()
       .then((result) => {
+        if (!active) return
         if (result.ok) {
           setUsage(result.value)
         } else if (result.error.code === 'AUTH_EXPIRED') {
@@ -27,9 +29,11 @@ export function IdlePage({ onStartRecording, onSignOut }: Props) {
         setLoading(false)
       })
       .catch(() => {
+        if (!active) return
         setError(t('error.network'))
         setLoading(false)
       })
+    return () => { active = false }
   }, [onSignOut])
 
   const handleSignOut = async () => {

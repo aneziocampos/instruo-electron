@@ -84,7 +84,7 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: () => void }) {
         onClick={() => window.electronAPI.openExternal('https://instruo.ai/privacy')}
         className="text-text-tertiary text-xs mt-12 hover:text-text-secondary transition-colors"
       >
-        Privacy Policy
+        {t('privacy.policy')}
       </button>
     </div>
   )

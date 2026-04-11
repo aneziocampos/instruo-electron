@@ -32,9 +32,7 @@ function handleHotkey(): void {
       stopRecording()
       break
     case 'paused':
-      recordingEngine.resume()
-      startHooks()
-      setRecordingMenu(state.stepCount)
+      resumeRecording()
       break
     case 'review':
       // Hotkey does nothing during review
@@ -74,6 +72,15 @@ export function pauseRecording(): void {
   const state = recordingEngine.getState()
   if (state.status === 'paused') {
     setPausedMenu(state.stepCount)
+  }
+}
+
+export function resumeRecording(): void {
+  recordingEngine.resume()
+  startHooks()
+  const state = recordingEngine.getState()
+  if (state.status === 'recording') {
+    setRecordingMenu(state.stepCount)
   }
 }
 

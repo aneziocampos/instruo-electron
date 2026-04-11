@@ -9,7 +9,9 @@ export const pt: Record<TranslationKey, string> = {
   'auth.tagline': 'Registre guias passo a passo de qualquer aplicativo',
 
   'idle.startRecording': 'Iniciar Gravacao',
-  'idle.hotkey': 'Ctrl+Shift+R',
+  'idle.recording': 'Gravando...',
+  'idle.stepsCaptured': '{count} passos capturados',
+  'idle.hotkeyStop': '{key} para parar',
   'idle.signOut': 'Sair',
   'idle.usage': '{used} de {limit} guias',
   'idle.usageUnlimited': '{used} guias',
@@ -35,10 +37,26 @@ export const pt: Record<TranslationKey, string> = {
   'review.recordAgain': 'Gravar novamente',
   'review.step': 'Passo {n}',
   'review.deleteStep': 'Excluir passo',
+  'review.cancel': 'Cancelar',
+  'review.screenshotPreview': 'Pre-visualizacao',
+  'review.screenshotAvailable': 'Disponivel apos a gravacao',
+  'review.stepsCount': '{count} passos',
 
   'upload.uploading': 'Enviando passo {current} de {total}...',
   'upload.failed': 'Falha no envio. Tente novamente.',
   'upload.retry': 'Tentar novamente',
+
+  'permission.title': 'Permissoes Necessarias',
+  'permission.description': 'O Instruo precisa dessas permissoes para gravar sua tela e detectar onde voce clica.',
+  'permission.accessibility': 'Acessibilidade',
+  'permission.accessibilityDesc': 'Detectar elementos de interface e capturar entrada do teclado',
+  'permission.screen': 'Gravacao de Tela',
+  'permission.screenDesc': 'Capturar screenshots durante a gravacao',
+  'permission.continue': 'Continuar',
+  'permission.grant': 'Conceder',
+  'permission.hint': 'Conceda permissoes em Ajustes do Sistema e retorne aqui. Esta pagina atualiza automaticamente.',
+
+  'privacy.policy': 'Politica de Privacidade',
 
   'success.title': 'Guia criado!',
   'success.description': 'Seu guia com {count} passos foi criado.',
@@ -50,7 +68,4 @@ export const pt: Record<TranslationKey, string> = {
   'error.planLimit': 'Voce atingiu o limite de guias do seu plano.',
   'error.upgrade': 'Fazer upgrade',
 
-  'lgpd.title': 'Aviso de Gravacao de Tela',
-  'lgpd.message': 'O Instruo captura screenshots de toda a sua tela durante a gravacao. Isso pode incluir dados pessoais visiveis em outros aplicativos. Certifique-se de que nenhuma informacao sensivel esteja exibida antes de iniciar.',
-  'lgpd.acknowledge': 'Eu entendo'
 }

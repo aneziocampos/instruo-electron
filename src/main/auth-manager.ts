@@ -8,8 +8,10 @@ const store = new Store<{ encryptedToken: string | null }>({
   defaults: { encryptedToken: null }
 })
 
-// Pending state parameters for CSRF protection (Set-based to handle multiple sign-in attempts)
-const pendingStates = new Set<string>()
+// Pending state parameters for CSRF protection — Map with timestamps for TTL
+const pendingStates = new Map<string, number>()
+const STATE_TTL_MS = 5 * 60 * 1000
+const MAX_PENDING_STATES = 5
 
 let cachedToken: string | null = null
 
@@ -57,10 +59,17 @@ export function signOut(): void {
 
 export function generateState(): string {
   const state = randomBytes(32).toString('hex')
-  pendingStates.add(state)
+  if (pendingStates.size >= MAX_PENDING_STATES) {
+    const oldest = [...pendingStates.entries()].sort((a, b) => a[1] - b[1])[0]
+    if (oldest) pendingStates.delete(oldest[0])
+  }
+  pendingStates.set(state, Date.now())
   return state
 }
 
 export function validateAndConsumeState(state: string): boolean {
-  return pendingStates.delete(state)
+  const ts = pendingStates.get(state)
+  if (!ts) return false
+  pendingStates.delete(state)
+  return (Date.now() - ts) < STATE_TTL_MS
 }

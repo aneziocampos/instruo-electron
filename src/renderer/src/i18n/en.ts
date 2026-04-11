@@ -7,7 +7,9 @@ export const en = {
   'auth.tagline': 'Record step-by-step guides from any app',
 
   'idle.startRecording': 'Start Recording',
-  'idle.hotkey': 'Ctrl+Shift+R',
+  'idle.recording': 'Recording...',
+  'idle.stepsCaptured': '{count} steps captured',
+  'idle.hotkeyStop': '{key} to stop',
   'idle.signOut': 'Sign out',
   'idle.usage': '{used} of {limit} guides',
   'idle.usageUnlimited': '{used} guides',
@@ -33,10 +35,26 @@ export const en = {
   'review.recordAgain': 'Record again',
   'review.step': 'Step {n}',
   'review.deleteStep': 'Delete step',
+  'review.cancel': 'Cancel',
+  'review.screenshotPreview': 'Screenshot preview',
+  'review.screenshotAvailable': 'Available after recording',
+  'review.stepsCount': '{count} steps',
 
   'upload.uploading': 'Uploading step {current} of {total}...',
   'upload.failed': 'Upload failed. Please try again.',
   'upload.retry': 'Retry',
+
+  'permission.title': 'Permissions Required',
+  'permission.description': 'Instruo needs these permissions to record your screen and detect what you click on.',
+  'permission.accessibility': 'Accessibility',
+  'permission.accessibilityDesc': 'Detect UI elements and capture keyboard input',
+  'permission.screen': 'Screen Recording',
+  'permission.screenDesc': 'Capture screenshots during recording',
+  'permission.continue': 'Continue',
+  'permission.grant': 'Grant',
+  'permission.hint': 'Grant permissions in System Settings, then return here. This page updates automatically.',
+
+  'privacy.policy': 'Privacy Policy',
 
   'success.title': 'Guide created!',
   'success.description': 'Your guide with {count} steps has been created.',
@@ -48,9 +66,6 @@ export const en = {
   'error.planLimit': 'You\'ve reached your plan\'s guide limit.',
   'error.upgrade': 'Upgrade plan',
 
-  'lgpd.title': 'Screen Recording Notice',
-  'lgpd.message': 'Instruo captures screenshots of your entire screen during recording. This may include personal data visible in other applications. Please ensure no sensitive information is displayed before starting.',
-  'lgpd.acknowledge': 'I understand'
 } as const
 
 export type TranslationKey = keyof typeof en

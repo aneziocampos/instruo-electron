@@ -60,12 +60,19 @@ export type RecordingState =
 
 // --- Guide types ---
 
+export interface StepEdit {
+  id: string
+  title: string
+  description: string
+}
+
 export interface GuideUploadParams {
   title: string
   guideType: 'linear' | 'interactive'
   aiWriter: string | null
   customAiWriterId: string | null
   teamId: string | null
+  editedSteps: StepEdit[]
 }
 
 export interface GuideResponse {

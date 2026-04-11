@@ -34,30 +34,34 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<Respon
 }
 
 interface UsageApiResponse {
-  user: { name: string; email: string }
-  plan: { name: string; guide_limit: number | null; guides_used: number }
-  ai_writers: Array<{ id: string | number; name: string; is_custom: boolean }>
+  user_name: string
+  user_email: string
+  plan: string
+  limits: { guides: number | null; steps_per_guide: number | null }
+  usage: { guides_count: number }
+  ai_writers: Array<{ key: string; type: string; id?: number; name?: string }>
   default_ai_writer: string | null
+  default_custom_ai_writer_id: number | null
 }
 
 export async function fetchUsage(): Promise<UsageResponse> {
   const response = await apiFetch('/usage')
   const data = (await response.json()) as Partial<UsageApiResponse>
-  if (!data.user?.email || !data.plan?.name) {
-    throw new Error('Invalid usage response: missing required fields')
+  if (!data.user_email) {
+    throw new Error('Invalid usage response: missing user_email')
   }
 
   return {
-    user: { name: data.user.name ?? '', email: data.user.email },
+    user: { name: data.user_name ?? '', email: data.user_email },
     plan: {
-      name: data.plan!.name,
-      guideLimit: data.plan!.guide_limit ?? null,
-      guidesUsed: data.plan!.guides_used ?? 0
+      name: data.plan ?? 'free',
+      guideLimit: data.limits?.guides ?? null,
+      guidesUsed: data.usage?.guides_count ?? 0
     },
     aiWriters: (data.ai_writers ?? []).map((w) => ({
-      id: String(w.id),
-      name: w.name,
-      isCustom: w.is_custom
+      id: w.id ? String(w.id) : w.key,
+      name: w.name ?? w.key,
+      isCustom: w.type === 'custom'
     })),
     defaultAiWriter: data.default_ai_writer ?? null
   }
